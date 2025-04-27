@@ -1,16 +1,16 @@
-import {createContext, useContext, useMemo} from 'react';
 import {
   Transform,
-  useNodeRef,
   useIsomorphicLayoutEffect,
   useLatestValue,
+  useNodeRef,
   useUniqueId,
 } from '@dnd-kit/utilities';
+import { createContext, useContext, useMemo } from 'react';
 
-import {InternalContext, Data} from '../store';
-import type {UniqueIdentifier} from '../types';
-import {ActiveDraggableContext} from '../components/DndContext';
-import {useSyntheticListeners, SyntheticListenerMap} from './utilities';
+import { ActiveDraggableContext } from '../components/DndContext';
+import { Data, InternalContext } from '../store';
+import type { UniqueIdentifier } from '../types';
+import { SyntheticListenerMap, useSyntheticListeners } from './utilities';
 
 export interface UseDraggableArguments {
   id: UniqueIdentifier;
@@ -21,6 +21,7 @@ export interface UseDraggableArguments {
     roleDescription?: string;
     tabIndex?: number;
   };
+  register?: boolean;
 }
 
 export interface DraggableAttributes {
@@ -45,6 +46,7 @@ export function useDraggable({
   data,
   disabled = false,
   attributes,
+  register = true,
 }: UseDraggableArguments) {
   const key = useUniqueId(ID_PREFIX);
   const {
@@ -63,7 +65,7 @@ export function useDraggable({
   } = attributes ?? {};
   const isDragging = active?.id === id;
   const transform: Transform | null = useContext(
-    isDragging ? ActiveDraggableContext : NullContext
+    isDragging ? ActiveDraggableContext : NullContext,
   );
   const [node, setNodeRef] = useNodeRef();
   const [activatorNode, setActivatorNodeRef] = useNodeRef();
@@ -72,7 +74,10 @@ export function useDraggable({
 
   useIsomorphicLayoutEffect(
     () => {
-      draggableNodes.set(id, {id, key, node, activatorNode, data: dataRef});
+      if (!register) {
+        return;
+      }
+      draggableNodes.set(id, { id, key, node, activatorNode, data: dataRef });
 
       return () => {
         const node = draggableNodes.get(id);
@@ -83,7 +88,7 @@ export function useDraggable({
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draggableNodes, id]
+    [draggableNodes, id],
   );
 
   const memoizedAttributes: DraggableAttributes = useMemo(
@@ -102,7 +107,7 @@ export function useDraggable({
       isDragging,
       roleDescription,
       ariaDescribedById.draggable,
-    ]
+    ],
   );
 
   return {
